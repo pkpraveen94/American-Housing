@@ -1,0 +1,371 @@
+---
+title: "R- Project"
+author: "Praveen Kumar Marichamy"
+date: "19/12/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r}
+#Library
+
+#install.packages("data.table")
+library("data.table")
+
+#install.packages("forcats")
+library(forcats)
+
+#install.packages("dplyr")
+library(dplyr)
+
+#install.packages("ggplot2")
+library(ggplot2)
+
+```
+
+
+
+```{r}
+#Read_Data
+
+housing <- fread("/Users/praveen/Data_R/Project/csv_hus/psam_husa.csv")
+
+# housing_1<- fread("/Users/praveen/Data_R/Project/csv_hus/psam_husa.csv")
+# 
+# housing_2<- fread("/Users/praveen/Data_R/Project/csv_hus/psam_husb.csv")
+# 
+# housing_3<- fread("/Users/praveen/Data_R/Project/csv_hus/psam_husc.csv")
+# 
+# housing_4<- fread("/Users/praveen/Data_R/Project/csv_hus/psam_husd.csv")
+# 
+# housing <- rbind(housing_1,housing_2,housing_3,housing_4)
+
+
+```
+
+```{}
+
+Explanation:
+
+Public use microdata samples (PUMS) are readily accessible and available on the internet. The data is divided in to two parts housing and the population. It will explain the Characteristics of the housing samples taken and also the people living on it. The survey was conducted by US census bureau and it is one of the mandatory surveys conducted by the federal agencies. In total the data was collected across the fifty states in America. The data used to collect by the agencies by means of telephone, internet, mail and in person interview. The data collected can be used for business purposes, researchers and government related activities. Some part of the united states was missed in the American community survey such as Samoa, Northern marina islands, Virgin Islands. PUMS data were available in the form of comma- separated value file (csv), pdf version and in the text version also. 
+
+We have taken the housing related dataset variables for our analysis. It includes agricultural sales, bedrooms, computer, internet usage, rent, property value, toilet, telephone etc., The dataset of the taken year was divided into four separated csv files accordingly. To read those files form our system we have used read.csv to fetch the data and stored in an environment variable. Likewise, we are fetching the data and storing it in four environment variables namely (housing_1, housing_2, housing_3, housing_4). Our next aim is to combine all those separate files into a single csv file. To achieve this, we have used rbind function to merge all the four files into a variable called housing. Throughout our analysis we are going to perform with the combined housing variable.
+
+
+```
+
+```{r}
+
+options(scipen= 999)
+
+housing$ST= fct_recode(factor(housing$ST), Alaska ="2", Delaware="10", District_of_Columbia="11", Montana= "30", NorthDakota="38", California= "6", Florida= "12", NewYork= "36", Illinois= "17", Ohio= "39", Texas ="48", New_York ="36",Pennsylvania ="42", Wyoming="56", Vermont= "50", Georgia="13", Arizona="4", Colorado="8", Hawaii="15", Arkansas="5")
+
+(Max_Connections <- housing %>% select( BROADBND, ST) %>% 
+group_by(state= housing$ST) %>%
+summarise(connections= sum(BROADBND, na.rm= TRUE)) %>% 
+arrange(desc(connections)) %>% head(5))
+
+(Min_Connections<- select(housing,BROADBND, ST) %>% 
+group_by(state_min= housing$ST) %>%
+summarise(connections_min= sum(BROADBND, na.rm= TRUE))%>% 
+arrange(connections_min) %>% head(5))
+
+#Graph of First 5 Maximum number of Connections
+ggplot(data= Max_Connections, aes(x= state, y= connections)) + 
+geom_bar(fill='#A4A4A4', color="darkred",stat = "identity")
+
+#Graph of Last 5 Minimum number of Connections
+ggplot(data= Min_Connections, aes(x= state_min, y= connections_min)) + 
+geom_bar(fill='#A4A4A4', color="darkred",stat = "identity")
+
+
+```
+
+```{}
+Explanation:
+
+Broadband and Internet services are inevitable these days. These services are provided by many private and some government internet service providers also. In our analysis we are going to find which state in the united states using the highest broad band connection. The broadband connection is nothing but data plan for the cellular service for a smartphone and for any other mobile related devices. In our dataset we have three options listed in this category 
+1. N/A (Which mean no paid access to any of the internet services), 2. Yes (People who are all opted for one or more than one internet services), 3. No (People who has still has a broadband connection with no internet services enabled). 
+
+According to the housing dataset in united states of America there are totally 72 states. The states were listed in a variable called ST. The names of the state in the dataset were also listed with state code according to the 2010 census definitions. Our aim is to find which state is using the more cellular internet services. For this we have taken two variables namely (BROADBND, ST). As the variable ST in not in the user readable format we factorize to make it more meaningful for e.g., 01 indicates Alabama, 02 is Alaska, 72 is Puerto Rico etc., We have stored the top five states in the variable called Max_Connections. Likewise, the same analysis was done to show the least five cellular internet related services using states in the variable called Min_Connections. Both were plotted in the form of graph for better visualization.
+
+
+
+```
+
+```{r}
+# Broadband connection related to other computer equipment and Smartphone 
+
+# chi-Square for test of independence
+
+broadband1= housing %>% 
+  select(COMPOTHX, SMARTPHONE, BROADBND )
+
+broadband1$BROADBND= as.factor(broadband1$BROADBND)
+broadband1$COMPOTHX= as.factor(broadband1$COMPOTHX)
+broadband1$SMARTPHONE= as.factor(broadband1$SMARTPHONE) 
+
+broadband1$COMPOTHX <- factor(broadband1$COMPOTHX, labels = c("Computer_Equipment Yes", "Computer_Equipment No"))
+
+broadband1$BROADBND<- factor(broadband1$BROADBND, labels = c("BroadBand Yes", "BroadBand No"))
+
+broadband1$SMARTPHONE <- factor(broadband1$SMARTPHONE, labels = c("Smartphone Yes", "Smartphone No"))
+
+(tbl1 = table(broadband1$BROADBND, broadband1$COMPOTHX))
+
+(tbl2 = table(broadband1$BROADBND, broadband1$SMARTPHONE))
+
+chisq.test(tbl1) 
+
+chisq.test(tbl2) 
+
+```
+
+
+```{}
+
+Explanation:
+
+Depending on the data collected whether it’s of categorical or numerical in nature we can do statistical tests on top on that to prove the significance between them. In this stage we have taken two categorical variables to check of any significance between them. In other words, the chi-square test is used to see the significance difference between the observed and the expected values. Here we have taken our Null hypothesis is the variables are independent and there is no related exists between them. All the statistical analysis works in a way to reject the null hypothesis and prove the variables are dependent on each other. 
+
+In our analysis we have taken two variables Broadband connection and other computer equipment. In general, our assumption is that every other computer related equipment needs internet connectivity to access. The other computer equipment’s might be a tablet, printer or any other related equipment’s. The type of analysis we were done is to find any relationship between these two variables. For example, if a person has a broadband connection what is the possibility of having an other computer equipment as well. Our alternate hypothesis is there must be a relationship between these two variables. In another Chi-Square test we have taken broadband connection vs smartphone connection which means a person brought a broadband connection he must have a smartphone with him. This is our alternate hypothesis. 
+
+P-Value:
+
+Its again a statistical inference which shows the probability of the occurrence of the event. In majority cases the cut-off for the p- value is less than 0.005.  
+
+In both the tests the p-value is very less than 0.005 which mean the possibility of not falling in to the category is of less than 5 percentage. From this we can conclude that both the tests are dependent in nature and we can reject the null hypothesis.
+
+Form our statistical analysis we can infer that:
+
+1.	People who brought broadband doesnt mean they have computer equipment.
+2.	People who brought broadband having a smartphone as well.
+
+```
+
+```{r}
+
+housing$BLD= fct_recode(factor(housing$BLD), Mobile_home_trailer= "1", 
+One_family_house_detached= "2", One_family_house_attached= "3", Two_Apartments= "4", Three_to_Four_Apartments= "5", Five_to_Nine_Apartments= "6", Ten_to_Nineteen_Apartments= "7", Twenty_to_FortyNine_Apartments= "8", Fifty_or_more_appartments= "9", Boat_RV_Van= "10")
+
+housing$BUS= fct_recode(factor(housing$BUS), Yes= "1", No= "2", Case_is_from_2016_later= "3")
+
+
+# Analysing how many business or medical office on each property 
+
+(office<- housing %>% 
+select(BLD, BUS) %>% 
+filter(!is.na(BLD),!is.na(BUS)) %>% 
+group_by(Property= BLD) %>%
+filter(BUS== "Yes") %>% 
+count() )
+
+#Graph
+ggplot(data= office, aes(x= Property, y= n)) +  
+geom_bar(fill='#A4A4A4', color="darkred",stat = "identity")
+                                                            
+```
+```{}
+
+Explanation:
+
+In the above analysis we aim to found which houses were having a business or medical office in their property. In many cases people used to use their houses as an office attached. They will allocate space like a room for their medical or business offices for e.g., lawyers used to have an attached office in their houses as well. A well-known example we can consider is the real-estate office attached to the houses. Sometimes people used to have a separate entrance for their respective offices. In our data set there are lot of different types of houses listed. Mobile home trailer based, 01. Mobile home or trailer, 02. One-family house detached, 03. One-family house attached, 04. 2 Apartments, 05. 3-4 Apartments, 06. 5-9 Apartments, 07. 10-19 Apartments, 08. 20-49 Apartments, 09. 50 or more apartments, 10. Boat, RV, van, etc.
+
+The Business or medical center facility on property was given by the variable name BUS. In our analysis we have taken the variable BUS equal to yes as it implies, we are interested in showing the property which having a business property and also, we are counting the number of occurrence’s. These are plotted in the form of bar graph for better visualizations. 
+
+Inferences:
+
+1.	We have found only three types of property has an office attached and rest of all doesn’t have any office attached. 
+2.	One family house detached is showing a highest count when compared with other two property types.
+
+```
+
+
+
+```{r}
+
+# Analysis on the servies opted by the people according to the house sizes 
+
+housing$ACCESS= fct_recode(factor(housing$ACCESS), Paying_cell_phone_company_Internet_services= "1", Without_paying_cell_phone_company_Internet_services= "2", No_access_Internet= "3")
+
+housing$ACR= fct_recode(factor(housing$ACR), House_on_less_than_one_acre= "1", House_on_one_to_less_than_ten_acres= "2", House_on_ten_or_more_acres= "3")
+
+housing %>% select(ACR, ACCESS) %>%
+group_by(ACR, ACCESS) %>% 
+filter(!is.na(ACR),!is.na(ACCESS)) %>% 
+count()
+
+```
+
+```{}
+
+Explanation:
+
+In many cases the size of the house determines the services we opted for. Say when we have a bigger house and a lavish lifestyle, we used to have many expensive stuffs. Likewise, in our dataset we have a variable ACR which tells us the size of the house an individual owned. The variable ACR has three types of houses 1. House on less than one acre, 2. House on one to less than ten acres, 3. House on ten or more acres. 
+
+In our case we have taken the service as access to the internet. In this we have three categories named 1. Paying a cell phone company or Internet service provider, 2. Not paying a cell phone company or Internet service provider, 3. No access to the Internet at this house, apartment or mobile home.
+
+
+Inferences from the table:
+
+1.	The analysis tells us housing on less than one acre tops the list with paying for the cell phone company with a count of 948419 in total. 
+2.	The least count is for ten-acre house and more than ten-acre house are not paying cell phone company or to any internet services with the count of 1406.
+3.	In the no Internet access category house on less than one acre tops the list. 
+
+```
+
+```{r}
+
+housing$DIVISION= fct_recode(factor(housing$DIVISION), Puerto_Rico= "0", New_England= "1", Middle_Atlantic= "2", East_North_Central= "3", West_North_Central= "4", South_Atlantic= "5", East_South_Central= "6", West_South_Central= "7", Mountain= "8", Pacific= "9")
+
+housing$VEH= fct_recode(factor(housing$VEH), No_Vehicle="0", One_vehicle= "1", Two_vehicles= "2", Three_vehicles= "3", Four_vehicles= "4", Five_vehicles= "5", Six_or_more_vehicle= "6")
+
+
+# Number of vehicle available in each division
+
+(veh_div<- housing %>% 
+select(DIVISION, VEH)%>% 
+group_by(DIVISION, VEH)%>% 
+filter(!is.na(DIVISION),!is.na(VEH))%>%
+summarise(Total_Vehicle = n()) )
+
+# Maximum number of vehicle available in each division
+
+(max_veh<- veh_div %>% 
+summarise(Max_Vehicle= max(Total_Vehicle)))
+
+# Visualization
+ggplot(max_veh, aes(x = "", y = Max_Vehicle, fill = DIVISION)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0)
+
+```
+
+```{}
+
+Explanation:
+
+Vehicles play an important role in the everyone’s household list. The number of vehicles also implicates that there might be a problem of air pollution in that particular region. In our analysis we are trying limit ourselves to find out where there was a maximum selling of vehicles or in other words a greater number of vehicles present. Our dataset presents with DIVISION as a variable where various geographical regions covered in united states of America. Puerto Rico, New England (Northeast region), Middle Atlantic (Northeast region), East North Central (Midwest region), West North Central (Midwest region), South Atlantic (South region), East South Central (South region), West South Central (South Region), Mountain (West region), Pacific (West region). 
+
+The vehicles present is categorized in to six different categories. According to one’s family size and interest people can own one or more than one vehicle. In our analysis there are totally six categories ranging from No vehicle to six or more vehicle.  The N/A indicates the field was empty. We have tried to neglect those fields and those fields having a valid entry were taken accounted. 
+
+Inferences:
+
+1.	By looking at the size of the chart we can tell Pacific division has the maximum number of vehicles present with the count of 259265
+2.	The minimum number of vehicles were present in the West_South_Central region with a count of 23316 
+
+```
+
+```{r}
+
+# Largest speaking household language
+
+housing$HHL= fct_recode(factor(housing$HHL), English_only= "1", Spanish= "2", Other_Indo_European_languages= "3", Asian_and_Pacific_Island_languages= "4", Other_language= "5", Six_or_more_vehicle= "6")
+
+(language<- housing %>% select(HHL) %>% group_by(Household_language= HHL) %>% filter(!is.na(HHL)) %>% summarise(Total = n()) )
+
+#Graphical Representation
+
+ggplot(language, aes(x = "", y = Total, fill = Household_language)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0)
+
+
+```
+
+
+```{}
+
+Explanation:
+
+It’s important to know the minority speaking languages in the English-speaking majority country like America. The data gives us four major languages as part of household languages English, Spanish, Other Indo-European languages, Asian and pacific island language, other languages. It’s not a surprise to see the English as the major language spoken in the housing data. But, the second majority is Spanish. It might be the reason that united states of America is surrounded by many Spanish speaking countries and the least one is Asian languages.
+
+```
+
+```{r}
+
+# Predicting Property value vs Insurance by Linear Regression
+
+(LR<- housing %>% select(INSP,VALP ) %>% filter(!is.na(INSP),!is.na(VALP)) )
+
+(relation <- lm(formula= INSP ~ VALP, data= LR) )
+
+summary(relation)
+
+print(relation)
+
+values <- data.frame(VALP= c(1000,2000))
+
+predict(relation, newdata = values)
+
+```
+
+```{}
+Linear Regression:
+
+Explanation:
+
+Linear regression is one of the basic models in the data science field. A linear approach model will explain the relationship between the independent variable and the dependent variable. It gives us the information to what extent the variables are linearly related. 
+
+The difference between the correlation and the regression part is with the help of the covariance we cannot able to predict the values of the other variable. 
+
+As part of regression analysis on our housing dataset we have taken variables such as property of the value and the Insurance respectively (INSP and VALP). Our aim is to predict the insurance of the property while giving the rent of the property. 
+
+Interpretations from the linear regression results:
+
+Residuals:
+
+When there is a difference between the actual observed values vs the response values it is called as the residuals.
+
+Coefficient Estimate:
+
+It indicates the change in the response per unit raise in the independent variable (Property Value VALP).  In our model our coefficient estimate is 7.755e+02.
+
+Coefficient Standard Error:
+
+It is nothing but the deviation from the linear regression line. It sometimes it will be called as estimation of the standard deviation. The smaller the standard error means the points which are spread will be less and close to the mean. Our Model standard error value is 1.203e+00
+
+T- Value:
+
+Measure of how many points deviated from the zero. (T-Value 644.6)
+
+P-Value:
+
+In our model our p-value is very less than 0.05(5 percent significance) this gives us a clear indication of rejecting the null hypothesis. The model gives us three star which implicates us the model complies up to three standard deviation.
+
+Residual Standard Error:
+
+Its (1060 on 1183460 degrees of freedom). It gives us the average distance between the regression line. 
+
+F-Value:
+
+It helps to determine the strength of the relationship between the dependent and the independent variable. Normally, the f value should be greater than one which indicates the relation is good and the F- Value is supported by the p- value to prove the significance. In our case the p-value for the F- statistic is of 2.129e+05 which is very less than the value 0.005. So we can consider this model as a good model.
+
+R-Squared:
+
+How well the model is fiited for the actual data. In our model the value is 0.1525 which mean’s the model is fitted for 15 percentage accuracy.
+
+Prediction:
+
+The Insurance amount was predicted for the given rent amount
+
+1. Rent Amount: 1000$, Insurance was predicted as : 776.3774$
+2. Rent Amount: 2000$, Insurance was predicted as : 777.2554$
+
+
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
